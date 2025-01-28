@@ -1,0 +1,230 @@
+---
+title: "ggplot2_tutorial_LING430_530"
+author: "Kris Kyle, Jacob Dirkx"
+date: "Last update 2025-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+---
+Setup
+---
+
+Before getting started, make sure to install ggplot2 (from now on, keep in mind ggplot and ggplot2 refer to the same thing) if you don't have it, and load it in via the library() function
+
+```{r}
+#if you don't have ggplot already on your computer or environment - viridis is for color grading which will help us later
+install.packages("ggplot2")
+install.packages("viridis")
+
+#load the package to use it, you can use ctrl and enter to run lines individually
+library("ggplot2")
+library("viridis")
+```
+
+A basic, preinstalled data called "mpg" is included with ggplot, detailing various automobile statistics
+
+To view this dataframe (an object type that we can do lots of analysis and graphing with: basically a data table) run summary() on it:
+
+```{r}
+#with other dataframes, you'd have to read it in with other functions. Lucky you!
+summary(mpg)
+```
+
+---
+Scatterplots and Line graphs
+---
+
+ggplot allows us to create many different kinds of plots to easily visualize our data. Let's apply ggplot() to the mpg dataframe, which will create a scatterplot 
+
+This is a type of graph that plots discreet points, each representing two variables of an observation:
+
+```{r}
+ggplot(data = mpg) + #this tells ggplot which dataset to use
+  geom_point(mapping = aes(x = displ, y = hwy)) #this sets the x and y axis and plots each data point
+```
+
+We can view a general trend between engine displacement going up and highway fuel efficiency going down. Very nice.
+
+To add a line of best fit to better visualize this trend, all we have to do is add an additional line of code:
+
+```{r}
+ggplot(data = mpg) + #this tells ggplot which dataset to use
+  geom_point(mapping = aes(x = displ, y = hwy)) + #this sets the x and y axis and plots each data point
+  geom_smooth(mapping = aes(x = displ, y = hwy), method = lm) #this creates the line of best fit
+```
+
+The first two lines are the same as before, creating the scatterplot, with the third line creating the line of best fit (lm stands for 'linear model', referring to the linearity of the best fit line)
+
+While we're at it, let's add a title and x/y labels to make it easier to read:
+
+```{r}
+ggplot(data = mpg) + #this tells ggplot which dataset to use
+  geom_point(mapping = aes(x = displ, y = hwy)) + #this sets the x and y axis and plots each data point
+  geom_smooth(mapping = aes(x = displ, y = hwy), method = lm) +
+  labs(
+  x = "Engine Displacement (liters)",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Relationship between engine displacement and highway fuel efficiency")
+```
+
+
+While the graph looks good, the dataset includes information regarding what type of car each data point (i.e. observation) refers to. Why don't we include that by assigning each data point a color based on what type of car it refers to:
+
+```{r}
+ggplot(data = mpg) + #this tells ggplot which dataset to use
+  geom_point(mapping = aes(x = displ, y = hwy, color = class)) + #this sets the x and y axis and plots each data point, "color" is used here to differ the color of the dots based on the class of car (suv, etc.)
+  geom_smooth(mapping = aes(x = displ, y = hwy), method = lm, color = "black") + #here, we set the color of the line explicitly to black
+  labs(
+  x = "Engine Displacement (liters)",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Relationship between engine displacement and highway fuel efficiency")
+```
+
+To go even further, we can even separate data points based on car type into their own graphs:
+
+```{r}
+ggplot(data = mpg) + #this tells ggplot which dataset to use
+  geom_point(mapping = aes(x = displ, y = hwy, color = class)) + #this sets the x and y axis and plots each data point, "color" is used here to differ the color of the dots based on the class of car (suv, etc.)
+  scale_color_viridis(discrete = TRUE)+
+  #this is an optional function that you can use to fine-tune the color grading
+  geom_smooth(mapping = aes(x = displ, y = hwy), method = lm, color = "black") + #here, we set the color of the line explicitly to black
+  facet_wrap(~ class, ncol = 2) #this will make multiple graphs based on class. Note that ncol (number of columns) and nrow (number of rows) can be set explicitly (but don't have to be)
+```
+
+Let's take a look at a different x variable, 'cyl' (number of cylinders in the engine) and plot it against highway fuel efficiency:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+Unfortunately, because the cylinder counts occur in discreet increments, the data is all bunched up at each cylinder count. Let's add a jitter - a small amount of random variation - to the datapoints to better visualize how many points there "really are" per cylinder count:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_jitter(mapping = aes(x = displ, y = hwy), width=0.25, height=0.5)#note the change from geom_point to geom_jitter. width specifies horizontal jitter, height specifies vertical jitter
+```
+
+Before moving on, let's take a look at geom_line() to create a line graph of displ + hwy:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_line(mapping = aes(x = displ, y = hwy))
+```
+
+While perhaps not the best way to display this particular data, it could be useful for others. Note that geom_line() has many features that geom_point() does, so feel free to add titles/labels etc. 
+
+It's also possible to layer different types of graphs together. Let's try and layer the basic line and scatter plots:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_line(mapping = aes(x = displ, y = hwy))+
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+
+---
+Box and Whisker/Violin Plots
+---
+
+When two or more groups are present in a given variable in the data, it is called a categorical variable. Representing categorical variables with different plot types can be more appropriate and lend greater clarity. Let's use a box and whisker plot to separate the data points based on their class (type of car):
+
+```{r}
+ggplot(data = mpg) + 
+  geom_boxplot(mapping = aes(x = class, y = hwy)) + #specify boxplot as plot type
+  labs(
+  x = "Vehicle Type",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Highway fuel efficiency by Vehicle Type")
+```
+
+Note that the center line indicates the median score (in this case, fuel efficiency), the boxes indicate the 25% quantile (lower line) and 75% quantile (upper line), and the whiskers include data points that extend no more than 1.5 times the interquartile range. The dots represent outliers.
+
+If we want, we can also plot the actual data on top of the boxplots using geom_jitter():
+
+```{r}
+ggplot(data = mpg) + 
+  geom_boxplot(mapping = aes(x = class, y = hwy), outlier.shape = NA) +
+  geom_jitter(mapping = aes(x = class, y = hwy), width = 0.2) +
+  labs(
+  x = "Vehicle Type",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Highway fuel efficiency by Vehicle Type")
+```
+
+We can also compare data based on another categorical variable. Below we distinguish each category based on drive type (four wheel drive, front wheel drive, and rear wheel drive)
+
+```{r}
+ggplot(data = mpg) + 
+  geom_boxplot(mapping = aes(x = class, y = hwy, color = drv)) + #like with scatterplots, color is optionally specified here
+  labs(
+  x = "Vehicle Type",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Highway fuel efficiency by Vehicle Type")
+```
+
+Maybe we want to view the distribution of each categorical variable more clearly with a similar format. This is where we can use violin plots, one of the coolest visualizations ever. Use geom_violin() with similar parameters as geom_boxplot():
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_violin(mapping = aes(x = class, y = hwy, color = drv)) + 
+  labs(
+  x = "Vehicle Type",
+  y = "Highway Fuel Efficiency (mpg)",
+  title = "Highway fuel efficiency by Vehicle Type")
+```
+
+Neat.
+
+---
+Bar Charts and Histograms
+---
+Let's now work with a different preinstalled dataset 'diamonds'. This dataset includes a number of characteristics of 54,000 diamonds. If you want to know more about the dataset, use summary() or help()!
+
+Say we want to know the number of diamonds that have certain cut qualities. We can use a bar chart to accomplish this, which plots a single x variable based on counts per category (y):
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut)) #note that in these charts, we only need to declare an x variable
+```
+
+Let's distinguish the bars by adding some color:
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut)) 
+```
+
+We can also compare the distribution of other categorical variables within each category on the x axis by changing the “fill” variable. Below, we will see the distribution of clarity within each cut category
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+```
+
+We can also adjust these plots to look at the proportion of clarity across cut by using the position = “fill” argument:
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+```
+
+Or, we can look at histograms of clarity for each cut using the position = “dodge” argument:
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge") 
+```
+
+A similar graph type we could use is a histogram, which also measures by frequency via plotting bars. However, histograms take a continuous x variable, whereas bar graphs take a categorical x variable. For instance, price data in the diamonds data is continuous; we can use a histogram to see the distribution.
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_histogram(mapping = aes(x = price, fill = cut), bins = 30) +
+  #specifying bin width - i.e. how wide each bar is
+  theme_minimal() 
+```
